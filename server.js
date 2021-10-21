@@ -17,7 +17,7 @@ app.set('view engine', 'ejs');
 main().catch((err) => console.log(err));
 
 async function main() {
-    await mongoose.connect('mongodb://localhost:27017/userDB', { useNewUrlParser: true });
+    await mongoose.connect('mongodb://localhost:27017/plainPassDB', { useNewUrlParser: true });
 }
 
 const userSchema = new mongoose.Schema({
@@ -56,19 +56,46 @@ app.post('/register', (req, res) => {
     });
 });
 
+// Do not use findOne method with 2 parameters, this is not how it is documented.
+// Use only email or password instead. See below app.post code for more details
+// on how to use both values to validate if a user registered and entered correct password,
+// used wrong password or never registered.
+
+// app.post('/login', (req, res) => {
+//     const email = req.body.username;
+//     const password = req.body.password;
+
+//     User.findOne({email: email, password: password}, (err, user) => {
+//         if(err) {
+//             console.error(err);
+//         } else {
+//             if(user){
+//                 console.log('You are already registered!');
+//                 res.render('secrets');
+//             } else {
+//                 console.log('You are never registered!');
+//             }
+//         }
+//     });
+// });
+
 app.post('/login', (req, res) => {
     const email = req.body.username;
     const password = req.body.password;
 
-    User.findOne({email: email, password: password}, (err, user) => {
+    User.findOne({email: email}, (err, user) => {
         if(err) {
             console.error(err);
         } else {
             if(user){
-                console.log('You are already registered!');
-                res.render('secrets');
+                if(user.password === password) {
+                    console.log('You are already registered!');
+                    res.render('secrets');
+                } else {
+                    console.error('Wrong password!');
+                }
             } else {
-                console.log('You are never registered!');
+                console.error('You are never registered!');
             }
         }
     });
